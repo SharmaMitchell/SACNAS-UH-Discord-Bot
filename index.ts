@@ -39,7 +39,7 @@ async function getEventsData() {
     if (data && data.values && data.values.length > 0) {
       // Get the current date in the format "Wednesday, January 24, 2024"
       // const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
-      const currentDate = "Saturday, September 24, 2022";
+      const currentDate = "Monday, September 5, 2022";
       console.log(currentDate);
 
       // Filter events happening today
@@ -58,17 +58,33 @@ async function getEventsData() {
         if (channel instanceof TextChannel) {
           // Announce each event happening today
           todayEvents.forEach((event) => {
-            const [name, description, location, date, time, image] = event;
+            const [name, description, location, date, time, image, ...links] =
+              event;
 
             // Remove year from date
             const dateWithoutYear = date.replace(/, \d{4}$/, "");
 
             // Remove the 'l' at the end of the image url (imgur resizing)
-            const imageWithoutL = image.replace(/l\./, ".");
+            const fullSizeEventImage = image.replace(/l\./, ".");
 
             // Build the message
-            const message = `Join us on **${dateWithoutYear}** at **${time}** for **${name}**!\n\n${description}\n\nLocation: **${location}**\n${imageWithoutL}`;
+            let message = `Join us on **${dateWithoutYear}** at **${time}** for **${name}**!\n\n${description}\n\nLocation: **${location}**`;
 
+            // Include event links if available
+            for (let i = 0; i < links.length; i += 2) {
+              const linkLabel = links[i];
+              const linkUrl = links[i + 1];
+
+              if (linkLabel && linkUrl) {
+                message += `\n[${linkLabel}](<${linkUrl}>)`;
+              }
+            }
+
+            // Add a newline before the image URL
+            message += "\n";
+
+            // Add the image URL to the message
+            message += `${fullSizeEventImage}`;
             // Send the message to the channel
             channel.send(message);
           });
