@@ -4,13 +4,20 @@
   "description": "Discord bot for SACNAS UH to automate event announcements and reminders.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --exec ts-node index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "date-fns": "^2.30.0",
+    "date-fns-tz": "^2.0.0",
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2"
   }
 }
