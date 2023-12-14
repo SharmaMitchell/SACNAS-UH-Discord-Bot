@@ -12,37 +12,17 @@ const { format, startOfMinute, addMinutes, parseISO } = require("date-fns");
 
 require("dotenv").config({ path: ".env.local" });
 
-const prefix = "!";
-
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
   scheduleApiCheck();
 });
-
-// client.on("messageCreate", (message: Message) => {
-//   if (message.author.bot) return;
-
-//   console.log(`Received message: ${message.content}`);
-
-//   if (message.content.startsWith(prefix)) {
-//     const args = message.content.slice(prefix.length).trim().split(/ +/);
-//     if(!args || args.length < 1){
-//       return
-//     }
-//     const command = args.shift().toLowerCase();
-
-//     if (command === "ping") {
-//       message.reply("Pong!");
-//     }
-//   }
-// });
 
 client.login(process.env.DISCORD_BOT_TOKEN);
 
 async function scheduleApiCheck() {
   // Set the desired time for the API check (2:50 PM CST in this example)
   const targetHour = 15; // 2 PM CST
-  const targetMinute = 12;
+  const targetMinute = 15;
 
   // Get the CST time zone
   const cstTimeZone = "America/Chicago";
@@ -51,7 +31,7 @@ async function scheduleApiCheck() {
   const now = new Date();
   const targetTime = startOfMinute(
     addMinutes(
-      parseISO(format(now, "yyyy-MM-dd'T'HH:mm:ss")),
+      parseISO(format(now, "yyyy-MM-dd'T'HH:mm:ss", { timeZone: cstTimeZone })),
       targetMinute - now.getMinutes() + (targetHour - now.getHours()) * 60
     )
   );
