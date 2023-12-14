@@ -1,6 +1,12 @@
-const { Client } = require("discord.js");
-const client = new Client();
-require("dotenv").config(); // Load environment variables from .env file
+const { Client, GatewayIntentBits } = require("discord.js");
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
+require("dotenv").config({ path: ".env.local" });
 
 const prefix = "!";
 
@@ -8,8 +14,10 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on("message", (message) => {
+client.on("messageCreate", (message) => {
   if (message.author.bot) return; // Ignore messages from other bots
+
+  console.log(`Received message: ${message.content}`);
 
   if (message.content.startsWith(prefix)) {
     const args = message.content.slice(prefix.length).trim().split(/ +/);
