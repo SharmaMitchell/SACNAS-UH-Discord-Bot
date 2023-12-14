@@ -1,5 +1,5 @@
-import { Message, TextChannel } from "discord.js";
-
+import { Message, TextChannel, Presence } from "discord.js";
+import { promises as fsPromises } from "fs";
 const { Client, GatewayIntentBits } = require("discord.js");
 const client = new Client({
   intents: [
@@ -12,10 +12,12 @@ const { format, startOfMinute, addMinutes, parseISO } = require("date-fns");
 
 require("dotenv").config({ path: ".env.local" });
 
+const LOG_FILE_PATH = "announcement_log.csv";
+
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
   scheduleApiCheck();
-  // getEventsData();
+  getEventsData();
 });
 
 client.login(process.env.DISCORD_BOT_TOKEN);
@@ -29,12 +31,12 @@ interface GoogleSheetsResponse {
 async function getEventsData() {
   try {
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Archive!A2:J99?key=${process.env.GOOGLE_API_KEY}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`
     );
 
     const data = (await response.json()) as GoogleSheetsResponse;
 
-    // console.log(data.values);
+    console.log(data.values);
 
     if (data && data.values && data.values.length > 0) {
       // Get the current date in the format "Wednesday, January 24, 2024"
@@ -45,6 +47,8 @@ async function getEventsData() {
         (event) => event[3] === currentDate
       );
 
+      console.log(todayEvents);
+
       if (todayEvents.length > 0) {
         // Get the channel where you want to send the message
         const channel = client.channels.cache.get(
@@ -52,10 +56,28 @@ async function getEventsData() {
         );
 
         if (channel instanceof TextChannel) {
+          const announcements = await readAnnouncementLog();
+
           // Announce each event happening today
           todayEvents.forEach((event) => {
             const [name, description, location, date, time, image, ...links] =
               event;
+
+            // Replace commas with underscores in date
+            const sanitizedDate = date.replace(/,/g, "_");
+            const announcementId = `${name}-${sanitizedDate}-${time}`;
+
+            // Check if any announcement in the array contains the announcementId as a substring
+            if (
+              announcements.some((announcement) =>
+                announcement.includes(announcementId)
+              )
+            ) {
+              console.log("Already announced this event.");
+              return;
+            } else {
+              console.log("Announcing this event.");
+            }
 
             // Remove year from date
             const dateWithoutYear = date.replace(/, \d{4}$/, "");
@@ -83,6 +105,12 @@ async function getEventsData() {
             message += `${fullSizeEventImage}`;
             // Send the message to the channel
             channel.send(message);
+
+            // Log the announcement with timestamp
+            const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+            const logEntry = `${timestamp},${announcementId}`;
+            announcements.push(logEntry);
+            writeAnnouncementLog(announcements);
           });
         } else {
           console.error("The channel is not a text channel.");
@@ -94,10 +122,30 @@ async function getEventsData() {
   }
 }
 
+async function readAnnouncementLog(): Promise<string[]> {
+  try {
+    const data = await fsPromises.readFile(LOG_FILE_PATH, "utf-8");
+    return data.split("\n").filter(Boolean);
+  } catch (error: any) {
+    return [];
+  }
+}
+
+async function writeAnnouncementLog(announcements: string[]): Promise<void> {
+  try {
+    await fsPromises.writeFile(LOG_FILE_PATH, announcements.join("\n"));
+  } catch (error: any) {
+    console.error(
+      "Error writing to announcement log:",
+      (error as Error).message
+    );
+  }
+}
+
 async function scheduleApiCheck() {
   // Set the desired time for the API check
-  const targetHour = 14;
-  const targetMinute = 0;
+  const targetHour = 16;
+  const targetMinute = 55;
 
   // Get the CST time zone
   const cstTimeZone = "America/Chicago";
