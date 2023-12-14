@@ -15,13 +15,26 @@ require("dotenv").config({ path: ".env.local" });
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
   scheduleApiCheck();
+  getEventsData();
 });
 
 client.login(process.env.DISCORD_BOT_TOKEN);
 
+async function getEventsData() {
+  fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`
+  )
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (data) {
+      console.log(data);
+    });
+}
+
 async function scheduleApiCheck() {
-  // Set the desired time for the API check (2:50 PM CST in this example)
-  const targetHour = 15; // 2 PM CST
+  // Set the desired time for the API check
+  const targetHour = 15;
   const targetMinute = 15;
 
   // Get the CST time zone
