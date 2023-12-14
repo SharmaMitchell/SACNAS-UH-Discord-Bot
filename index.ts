@@ -15,7 +15,7 @@ require("dotenv").config({ path: ".env.local" });
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
   scheduleApiCheck();
-  getEventsData();
+  // getEventsData();
 });
 
 client.login(process.env.DISCORD_BOT_TOKEN);
@@ -34,20 +34,16 @@ async function getEventsData() {
 
     const data = (await response.json()) as GoogleSheetsResponse;
 
-    console.log(data.values);
+    // console.log(data.values);
 
     if (data && data.values && data.values.length > 0) {
       // Get the current date in the format "Wednesday, January 24, 2024"
-      // const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
-      const currentDate = "Monday, September 5, 2022";
-      console.log(currentDate);
+      const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
 
       // Filter events happening today
       const todayEvents = data.values.filter(
         (event) => event[3] === currentDate
       );
-
-      console.log(todayEvents);
 
       if (todayEvents.length > 0) {
         // Get the channel where you want to send the message
@@ -100,8 +96,8 @@ async function getEventsData() {
 
 async function scheduleApiCheck() {
   // Set the desired time for the API check
-  const targetHour = 15;
-  const targetMinute = 15;
+  const targetHour = 14;
+  const targetMinute = 0;
 
   // Get the CST time zone
   const cstTimeZone = "America/Chicago";
@@ -124,7 +120,7 @@ async function scheduleApiCheck() {
 
   // Schedule the API check to run at the specified time every day
   setTimeout(async () => {
-    await checkApiAndSendMessage();
+    await getEventsData();
     // Schedule the next API check
     scheduleApiCheck();
   }, delay);
@@ -134,8 +130,6 @@ async function checkApiAndSendMessage() {
   try {
     // Call your API
     const apiResponse = true;
-    // print current time
-    console.log("its time: ", new Date());
 
     // Check if the API response meets your condition
     if (apiResponse) {
