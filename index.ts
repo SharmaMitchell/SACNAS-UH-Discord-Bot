@@ -29,7 +29,7 @@ interface GoogleSheetsResponse {
 async function getEventsData() {
   try {
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Archive!A2:J99?key=${process.env.GOOGLE_API_KEY}`
     );
 
     const data = (await response.json()) as GoogleSheetsResponse;
@@ -38,7 +38,8 @@ async function getEventsData() {
 
     if (data && data.values && data.values.length > 0) {
       // Get the current date in the format "Wednesday, January 24, 2024"
-      const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
+      // const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
+      const currentDate = "Saturday, September 24, 2022";
       console.log(currentDate);
 
       // Filter events happening today
@@ -59,15 +60,14 @@ async function getEventsData() {
           todayEvents.forEach((event) => {
             const [name, description, location, date, time, image] = event;
 
+            // Remove year from date
+            const dateWithoutYear = date.replace(/, \d{4}$/, "");
+
+            // Remove the 'l' at the end of the image url (imgur resizing)
+            const imageWithoutL = image.replace(/l\./, ".");
+
             // Build the message
-            const message = `
-              **Event:** ${name}
-              **Description:** ${description}
-              **Location:** ${location}
-              **Date:** ${date}
-              **Time:** ${time}
-              **Event Image:** ${image}
-            `;
+            const message = `Join us on **${dateWithoutYear}** at **${time}** for **${name}**!\n\n${description}\n\nLocation: **${location}**\n${imageWithoutL}`;
 
             // Send the message to the channel
             channel.send(message);
