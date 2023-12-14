@@ -20,16 +20,66 @@ client.on("ready", () => {
 
 client.login(process.env.DISCORD_BOT_TOKEN);
 
+interface GoogleSheetsResponse {
+  range: string;
+  majorDimension: string;
+  values: string[][];
+}
+
 async function getEventsData() {
-  fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`
-  )
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (data) {
-      console.log(data);
-    });
+  try {
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`
+    );
+
+    const data = (await response.json()) as GoogleSheetsResponse;
+
+    console.log(data.values);
+
+    if (data && data.values && data.values.length > 0) {
+      // Get the current date in the format "Wednesday, January 24, 2024"
+      const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
+      console.log(currentDate);
+
+      // Filter events happening today
+      const todayEvents = data.values.filter(
+        (event) => event[3] === currentDate
+      );
+
+      console.log(todayEvents);
+
+      if (todayEvents.length > 0) {
+        // Get the channel where you want to send the message
+        const channel = client.channels.cache.get(
+          process.env.ANNOUNCEMENT_CHANNEL_ID
+        );
+
+        if (channel instanceof TextChannel) {
+          // Announce each event happening today
+          todayEvents.forEach((event) => {
+            const [name, description, location, date, time, image] = event;
+
+            // Build the message
+            const message = `
+              **Event:** ${name}
+              **Description:** ${description}
+              **Location:** ${location}
+              **Date:** ${date}
+              **Time:** ${time}
+              **Event Image:** ${image}
+            `;
+
+            // Send the message to the channel
+            channel.send(message);
+          });
+        } else {
+          console.error("The channel is not a text channel.");
+        }
+      }
+    }
+  } catch (error: any) {
+    console.error("Error checking API:", (error as Error).message);
+  }
 }
 
 async function scheduleApiCheck() {
