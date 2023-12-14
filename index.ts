@@ -12,6 +12,7 @@ const { format, startOfMinute, addMinutes, parseISO } = require("date-fns");
 
 require("dotenv").config({ path: ".env.local" });
 
+const EVENTS_API_URL = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`;
 const LOG_FILE_PATH = "announcement_log.csv";
 
 client.on("ready", async () => {
@@ -44,9 +45,7 @@ interface GoogleSheetsResponse {
 
 async function getEventsData() {
   try {
-    const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`
-    );
+    const response = await fetch(EVENTS_API_URL);
 
     const data = (await response.json()) as GoogleSheetsResponse;
 
@@ -87,10 +86,10 @@ async function getEventsData() {
                 announcement.includes(announcementId)
               )
             ) {
-              console.log("Already announced this event.");
+              // console.log("Already announced this event.");
               return;
             } else {
-              console.log("Announcing this event.");
+              // console.log("Announcing this event.");
             }
 
             // Remove year from date
