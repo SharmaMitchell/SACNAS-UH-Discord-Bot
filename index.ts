@@ -1,4 +1,4 @@
-import { Message, TextChannel, Presence } from "discord.js";
+import { TextChannel, PresenceData, ActivityType, Guild } from "discord.js";
 import { promises as fsPromises } from "fs";
 const { Client, GatewayIntentBits } = require("discord.js");
 const client = new Client({
@@ -14,8 +14,22 @@ require("dotenv").config({ path: ".env.local" });
 
 const LOG_FILE_PATH = "announcement_log.csv";
 
-client.on("ready", () => {
+client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
+
+  // Read the initial count from the announcement log
+  const announcements = await readAnnouncementLog();
+  const initialAnnouncementCount = announcements.length;
+
+  // Fetch the number of users across all servers
+  const totalUsers = client.guilds.cache.reduce(
+    (accumulator: number, guild: Guild) => accumulator + guild.memberCount,
+    0
+  );
+
+  // Set the initial status with the count
+  setBotStatus(initialAnnouncementCount, totalUsers);
+
   scheduleApiCheck();
   getEventsData();
 });
@@ -174,26 +188,17 @@ async function scheduleApiCheck() {
   }, delay);
 }
 
-async function checkApiAndSendMessage() {
-  try {
-    // Call your API
-    const apiResponse = true;
+// Set bot's status to show the number of events announced
+function setBotStatus(eventsAnnounced: number, totalUsers: number): void {
+  const status: PresenceData = {
+    activities: [
+      {
+        name: `${eventsAnnounced} events announced to ${totalUsers} Sacnistas!`,
+        type: ActivityType.Custom,
+      },
+    ],
+    status: "online",
+  };
 
-    // Check if the API response meets your condition
-    if (apiResponse) {
-      // Get the channel where you want to send the message
-      const channel = client.channels.cache.get(
-        process.env.ANNOUNCEMENT_CHANNEL_ID
-      );
-
-      if (channel instanceof TextChannel) {
-        // Send a message to the channel
-        channel.send("The API condition is met!");
-      } else {
-        console.error("The channel is not a text channel.");
-      }
-    }
-  } catch (error: any) {
-    console.error("Error checking API:", (error as Error).message);
-  }
+  client.user.setPresence(status);
 }
