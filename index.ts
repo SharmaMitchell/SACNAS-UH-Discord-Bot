@@ -132,6 +132,7 @@ async function announceEvents(
   channel: TextChannel
 ) {
   const announcements = await readAnnouncementLog();
+  const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
 
   // Announce each event happening today, or one week from now
   eventsToAnnounce.forEach((event) => {
@@ -141,10 +142,13 @@ async function announceEvents(
     const sanitizedDate = date.replace(/,/g, "_");
     const announcementId = `${name}-${sanitizedDate}-${time}`;
 
-    // Check if any announcement in the array contains the announcementId as a substring
+    // Check if same-day announcement has already been made
     if (
-      announcements.some((announcement) =>
-        announcement.includes(announcementId)
+      announcements.some(
+        (announcement) =>
+          announcement.includes(announcementId) &&
+          (date !== currentDate ||
+            announcement.includes(format(new Date(), "yyyy-MM-dd")))
       )
     ) {
       // console.log("Already announced this event.");
@@ -160,7 +164,6 @@ async function announceEvents(
     const fullSizeEventImage = image.replace(/l\./, ".");
 
     // Build the message
-    const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
     const onDate =
       date === currentDate ? "**today**" : `on **${dateWithoutYear}**`;
     const atTime = time !== "" ? ` at **${time}**` : "";
