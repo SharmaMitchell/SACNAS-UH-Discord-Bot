@@ -1,4 +1,10 @@
 import { TextChannel, PresenceData, ActivityType, Guild } from "discord.js";
+import { REST } from "@discordjs/rest";
+import {
+  Routes,
+  RESTPostAPIGuildScheduledEventJSONBody,
+  RESTPostAPIGuildScheduledEventResult,
+} from "discord-api-types/v10";
 import { promises as fsPromises } from "fs";
 const { Client, GatewayIntentBits } = require("discord.js");
 const client = new Client({
@@ -41,6 +47,35 @@ interface GoogleSheetsResponse {
   range: string;
   majorDimension: string;
   values: string[][];
+}
+
+const rest = new REST({ version: "10" }).setToken(
+  process.env.DISCORD_BOT_TOKEN!
+);
+
+async function createDiscordEvent(
+  name: string,
+  description: string,
+  image: string,
+  startTime: Date,
+  endTime: Date,
+  eventLocation: string
+): Promise<string> {
+  const eventData: RESTPostAPIGuildScheduledEventJSONBody = {
+    name,
+    description,
+    image,
+    entity_type: 3,
+    scheduled_start_time: startTime.toISOString(),
+    scheduled_end_time: endTime.toISOString(),
+    privacy_level: 2,
+    entity_metadata: { location: eventLocation },
+  };
+  const event = (await rest.post(
+    Routes.guildScheduledEvents(process.env.SACNAS_GUILD_ID!),
+    { body: eventData }
+  )) as RESTPostAPIGuildScheduledEventResult;
+  return event.id;
 }
 
 async function announceEvents(todayEvents: string[][], channel: TextChannel) {
