@@ -73,7 +73,9 @@ async function announceEvents(todayEvents: string[][], channel: TextChannel) {
     const fullSizeEventImage = image.replace(/l\./, ".");
 
     // Build the message
-    let message = `Join us on **${dateWithoutYear}** at **${time}** for **${name}**!\n\n${description}\n\nLocation: **${location}**`;
+    const atTime = time !== "" ? `at **${time}**` : "";
+    const eventDescription = description !== "" ? `\n\n${description}` : "";
+    let message = `Join us on **${dateWithoutYear}** ${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**`;
 
     // Include event links if available
     for (let i = 0; i < links.length; i += 2) {
