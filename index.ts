@@ -19,8 +19,8 @@ const { format, startOfMinute, addMinutes, parseISO } = require("date-fns");
 require("dotenv").config({ path: ".env.local" });
 
 const EVENTS_API_URL = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`;
-const ANNOUNCEMENT_LOG_FILE_PATH = "announcement_log.csv";
-const SCHEDULED_EVENTS_LOG_FILE_PATH = "scheduled_event_log.csv";
+const ANNOUNCEMENT_LOG_FILE_PATH = "./logs/announcement_log.csv";
+const SCHEDULED_EVENTS_LOG_FILE_PATH = "./logs/scheduled_event_log.csv";
 
 client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -54,6 +54,19 @@ const rest = new REST({ version: "10" }).setToken(
   process.env.DISCORD_BOT_TOKEN!
 );
 
+async function scheduleAllEvents(events: string[][]) {
+  events.forEach((event) => {
+    const [name, description, location, date, time, image, ...links] = event;
+
+    // Combine date and time to form a full datetime value
+    const dateTimeString = date + " " + (time || "16:00"); // Default time to 4pm if not provided
+    const startTime = new Date(dateTimeString);
+    const endTime = new Date(startTime.getTime() + 3 * 60 * 60 * 1000); // 3 hours past start time
+
+    createDiscordEvent(name, description, image, startTime, endTime, location);
+  });
+}
+
 async function createDiscordEvent(
   name: string,
   description: string,
@@ -62,21 +75,55 @@ async function createDiscordEvent(
   endTime: Date,
   eventLocation: string
 ): Promise<string> {
-  const eventData: RESTPostAPIGuildScheduledEventJSONBody = {
-    name,
-    description,
-    image,
-    entity_type: 3,
-    scheduled_start_time: startTime.toISOString(),
-    scheduled_end_time: endTime.toISOString(),
-    privacy_level: 2,
-    entity_metadata: { location: eventLocation },
-  };
-  const event = (await rest.post(
-    Routes.guildScheduledEvents(process.env.SACNAS_GUILD_ID!),
-    { body: eventData }
-  )) as RESTPostAPIGuildScheduledEventResult;
-  return event.id;
+  try {
+    console.log("Start Time:", startTime); // Add this line for debugging
+
+    const eventData: RESTPostAPIGuildScheduledEventJSONBody = {
+      name,
+      description,
+      image,
+      entity_type: 3,
+      scheduled_start_time: startTime.toISOString(),
+      scheduled_end_time: endTime.toISOString(),
+      privacy_level: 2,
+      entity_metadata: { location: eventLocation },
+    };
+
+    // Check if the event has been scheduled before creating it
+    if (await isEventAlreadyScheduled(name, startTime)) {
+      // Event is already scheduled, no need to create it again
+      console.log("Event already scheduled:", name);
+      return "";
+    }
+
+    const event = (await rest.post(
+      Routes.guildScheduledEvents(process.env.SACNAS_GUILD_ID!),
+      { body: eventData }
+    )) as RESTPostAPIGuildScheduledEventResult;
+
+    // Log the scheduled event with timestamp in the same format as the announcement log
+    const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+    const logEntry = `${timestamp},${name}-${startTime.toISOString()}-${
+      event.id
+    }`;
+    const scheduledEventsLog = await readScheduledEventsLog();
+    scheduledEventsLog.push(logEntry);
+    await writeScheduledEventsLog(scheduledEventsLog);
+
+    return event.id;
+  } catch (error) {
+    console.error("Error creating Discord event:", error);
+    throw error;
+  }
+}
+
+async function isEventAlreadyScheduled(
+  name: string,
+  startTime: Date
+): Promise<boolean> {
+  const eventId = `${name}-${startTime.toISOString()}`;
+  const scheduledEventsLog = await readScheduledEventsLog();
+  return scheduledEventsLog.some((entry) => entry.includes(eventId));
 }
 
 async function announceEvents(todayEvents: string[][], channel: TextChannel) {
@@ -149,7 +196,13 @@ async function getEventsData() {
 
     console.log(data.values);
 
+    // Announce events happening today
     if (data && data.values && data.values.length > 0) {
+      // Add scheduled events to server
+      scheduleAllEvents(data.values);
+
+      // Announce events happening today
+
       // Get the current date in the format "Wednesday, January 24, 2024"
       const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
 
