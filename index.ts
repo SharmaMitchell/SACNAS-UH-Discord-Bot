@@ -22,6 +22,8 @@ require("dotenv").config({ path: ".env.local" });
 const EVENTS_API_URL = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`;
 const ANNOUNCEMENT_LOG_FILE_PATH = "./logs/announcement_log.csv";
 const SCHEDULED_EVENTS_LOG_FILE_PATH = "./logs/scheduled_event_log.csv";
+const ANNOUNCEMENT_WARNING_LOG_FILE_PATH =
+  "./logs/announcement_warning_log.csv";
 
 client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -125,6 +127,85 @@ async function isEventAlreadyScheduled(
   const eventId = `${name}-${startTime.toISOString()}`;
   const scheduledEventsLog = await readScheduledEventsLog();
   return scheduledEventsLog.some((entry) => entry.includes(eventId));
+}
+
+async function sendAnnouncementWarnings(
+  eventsToAnnounce: string[][],
+  adminChannel: TextChannel
+) {
+  const warnings = await readWarningLog();
+  const twoDaysLater = format(
+    add(new Date(), { days: 11 }),
+    "EEEE, MMMM dd, yyyy"
+  );
+
+  // Warn admins about upcoming event announcements
+  eventsToAnnounce.forEach((event) => {
+    const [name, description, location, date, time, image, ...links] = event;
+
+    // Replace commas with underscores in date
+    const sanitizedDate = date.replace(/,/g, "_");
+    const announcementId = `${name}-${sanitizedDate}-${time}`;
+
+    // Check if warning has already been made
+    if (
+      warnings.some(
+        (announcement) =>
+          announcement.includes(announcementId) &&
+          (date !== twoDaysLater ||
+            announcement.includes(
+              format(add(new Date(), { days: 11 }), "yyyy-MM-dd")
+            ))
+      )
+    ) {
+      console.log("Already warned about this announcement.");
+      return;
+    } else {
+      // console.log("Announcing this event.");
+    }
+
+    // Remove year from date
+    const dateWithoutYear = date.replace(/, \d{4}$/, "");
+
+    // Remove the 'l' at the end of the image url (imgur resizing)
+    const fullSizeEventImage = image.replace(/l\./, ".");
+
+    // Build the message
+    const onDate =
+      date === twoDaysLater ? "**today**" : `on **${dateWithoutYear}**`;
+    const atTime = time !== "" ? ` at **${time}**` : "";
+    const eventDescription = description !== "" ? `\n\n${description}` : "";
+    const botInstructions = `To manually preview upcoming announcements in the admin channel, use [command].`;
+    const adminWarning = `**WARNING: The following announcement will be posted in 2 days.**\nPlease ensure information is accurate and format is correct. ${botInstructions}\n\n`;
+
+    let message = `${adminWarning}Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**`;
+
+    // Include event links if available
+    for (let i = 0; i < links.length; i += 2) {
+      const linkLabel = links[i];
+      const linkUrl = links[i + 1];
+
+      if (linkLabel && linkUrl) {
+        message += `\n[${linkLabel}](<${linkUrl}>)`;
+      }
+    }
+
+    // Add a newline before the image URL
+    message += "\n";
+
+    // Add the image URL to the message
+    message += `${fullSizeEventImage}`;
+    // Send the message to the channel
+    adminChannel.send(message);
+
+    // Log the announcement with timestamp
+    const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+    const logEntry = `${timestamp},${announcementId}`;
+    warnings.push(logEntry);
+  });
+
+  // Update the announcement log
+  writeWarningLog(warnings);
 }
 
 async function announceEvents(
@@ -251,6 +332,33 @@ async function getEventsData() {
           console.error("The channel is not a text channel.");
         }
       }
+
+      // Warn admins about upcoming announcements (2 days ahead)
+      const twoDaysLater = format(
+        add(new Date(), { days: 11 }),
+        "EEEE, MMMM dd, yyyy"
+      );
+      const nineDaysLater = format(
+        add(new Date(), { days: 13 }),
+        "EEEE, MMMM dd, yyyy"
+      );
+
+      const eventsToWarn = data.values.filter(
+        (event) => event[3] === twoDaysLater || event[3] === nineDaysLater
+      );
+
+      if (eventsToWarn.length > 0) {
+        // Get admin channel id
+        const adminChannel = client.channels.cache.get(
+          process.env.ADMIN_CHANNEL_ID
+        );
+
+        if (adminChannel instanceof TextChannel) {
+          await sendAnnouncementWarnings(eventsToWarn, adminChannel);
+        } else {
+          console.error("The channel is not a text channel.");
+        }
+      }
     }
   } catch (error: any) {
     console.error("Error checking API:", (error as Error).message);
@@ -296,6 +404,32 @@ async function writeScheduledEventsLog(events: string[]): Promise<void> {
   try {
     await fsPromises.writeFile(
       SCHEDULED_EVENTS_LOG_FILE_PATH,
+      events.join("\n")
+    );
+  } catch (error: any) {
+    console.error(
+      "Error writing to announcement log:",
+      (error as Error).message
+    );
+  }
+}
+
+async function readWarningLog(): Promise<string[]> {
+  try {
+    const data = await fsPromises.readFile(
+      ANNOUNCEMENT_WARNING_LOG_FILE_PATH,
+      "utf-8"
+    );
+    return data.split("\n").filter(Boolean);
+  } catch (error: any) {
+    return [];
+  }
+}
+
+async function writeWarningLog(events: string[]): Promise<void> {
+  try {
+    await fsPromises.writeFile(
+      ANNOUNCEMENT_WARNING_LOG_FILE_PATH,
       events.join("\n")
     );
   } catch (error: any) {
