@@ -144,7 +144,7 @@ async function createDiscordEvent(
     }
 
     const event = (await rest.post(
-      Routes.guildScheduledEvents(process.env.SACNAS_GUILD_ID!),
+      Routes.guildScheduledEvents(process.env.DISCORD_GUILD_ID!),
       { body: eventData }
     )) as RESTPostAPIGuildScheduledEventResult;
 
