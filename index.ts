@@ -76,8 +76,6 @@ async function createDiscordEvent(
   eventLocation: string
 ): Promise<string> {
   try {
-    console.log("Start Time:", startTime); // Add this line for debugging
-
     const eventData: RESTPostAPIGuildScheduledEventJSONBody = {
       name,
       description,
@@ -100,6 +98,8 @@ async function createDiscordEvent(
       Routes.guildScheduledEvents(process.env.SACNAS_GUILD_ID!),
       { body: eventData }
     )) as RESTPostAPIGuildScheduledEventResult;
+
+    console.log("Event creation response:", event);
 
     // Log the scheduled event with timestamp in the same format as the announcement log
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
@@ -186,6 +186,16 @@ async function announceEvents(todayEvents: string[][], channel: TextChannel) {
 
   // Update the announcement log
   writeAnnouncementLog(announcements);
+
+  // Update bot status
+  // Fetch the number of users across all servers
+  const totalUsers = client.guilds.cache.reduce(
+    (accumulator: number, guild: Guild) => accumulator + guild.memberCount,
+    0
+  );
+
+  // Set the initial status with the count
+  setBotStatus(announcements.length, totalUsers);
 }
 
 async function getEventsData() {
