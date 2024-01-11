@@ -41,3 +41,5 @@ If you'd like to fork the bot for your own usage, use the following instructions
   | My Event     | Come hang out! | Houston, TX | Wednesday, January 24, 2024 | 4:00 PM | https://i.imgur.com/eMMDrp2.jpeg | | | | |
 - Note the format of dates: `EEEE, MMMM dd, yyyy`
   - This is formatted on the Google Sheet, and code in this repo is made to handle that format. You may need to adjust the code, or format your Google Sheets dates accordingly.
+- Note that in my Google Sheets configuration, a sheet called "Upcoming" is used to store upcoming event data.
+  - Previous events are automatically archived using Google Apps Script. See the SACNAS-UH-Website [README](https://github.com/SharmaMitchell/SACNAS-UH-Website?tab=readme-ov-file#google-sheets-database) for details
