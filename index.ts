@@ -6,6 +6,7 @@ import {
   RESTPostAPIGuildScheduledEventResult,
 } from "discord-api-types/v10";
 import { promises as fsPromises } from "fs";
+import { add } from "date-fns";
 const { Client, GatewayIntentBits } = require("discord.js");
 const client = new Client({
   intents: [
@@ -126,11 +127,14 @@ async function isEventAlreadyScheduled(
   return scheduledEventsLog.some((entry) => entry.includes(eventId));
 }
 
-async function announceEvents(todayEvents: string[][], channel: TextChannel) {
+async function announceEvents(
+  eventsToAnnounce: string[][],
+  channel: TextChannel
+) {
   const announcements = await readAnnouncementLog();
 
-  // Announce each event happening today
-  todayEvents.forEach((event) => {
+  // Announce each event happening today, or one week from now
+  eventsToAnnounce.forEach((event) => {
     const [name, description, location, date, time, image, ...links] = event;
 
     // Replace commas with underscores in date
@@ -156,9 +160,12 @@ async function announceEvents(todayEvents: string[][], channel: TextChannel) {
     const fullSizeEventImage = image.replace(/l\./, ".");
 
     // Build the message
-    const atTime = time !== "" ? `at **${time}**` : "";
+    const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
+    const onDate =
+      date === currentDate ? "**today**" : `on **${dateWithoutYear}**`;
+    const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
-    let message = `Join us on **${dateWithoutYear}** ${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**`;
+    let message = `Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**`;
 
     // Include event links if available
     for (let i = 0; i < links.length; i += 2) {
@@ -206,33 +213,37 @@ async function getEventsData() {
 
     console.log(data.values);
 
-    // Announce events happening today
     if (data && data.values && data.values.length > 0) {
       // Add scheduled events to server
       scheduleAllEvents(data.values);
 
-      // Announce events happening today
+      // Announce events happening today, or one week from now
 
       // Get the current date in the format "Wednesday, January 24, 2024"
       const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
 
+      // Get the date for one week from today
+      const oneWeekLater = add(new Date(), { weeks: 1 });
+      const formattedOneWeekLater = format(oneWeekLater, "EEEE, MMMM dd, yyyy");
+
       // const testDate = "Wednesday, January 24, 2024";
 
-      // Filter events happening today
-      const todayEvents = data.values.filter(
-        (event) => event[3] === currentDate
+      // Filter events happening today, or one week from now
+      const eventsToAnnounce = data.values.filter(
+        (event) =>
+          event[3] === currentDate || event[3] === formattedOneWeekLater
       );
 
-      console.log(todayEvents);
+      console.log(eventsToAnnounce);
 
-      if (todayEvents.length > 0) {
+      if (eventsToAnnounce.length > 0) {
         // Get the channel where you want to send the message
         const channel = client.channels.cache.get(
           process.env.ANNOUNCEMENT_CHANNEL_ID
         );
 
         if (channel instanceof TextChannel) {
-          await announceEvents(todayEvents, channel);
+          await announceEvents(eventsToAnnounce, channel);
         } else {
           console.error("The channel is not a text channel.");
         }
