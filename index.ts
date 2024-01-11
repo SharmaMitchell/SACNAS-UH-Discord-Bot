@@ -19,7 +19,8 @@ const { format, startOfMinute, addMinutes, parseISO } = require("date-fns");
 require("dotenv").config({ path: ".env.local" });
 
 const EVENTS_API_URL = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`;
-const LOG_FILE_PATH = "announcement_log.csv";
+const ANNOUNCEMENT_LOG_FILE_PATH = "announcement_log.csv";
+const SCHEDULED_EVENTS_LOG_FILE_PATH = "scheduled_event_log.csv";
 
 client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -181,7 +182,7 @@ async function getEventsData() {
 
 async function readAnnouncementLog(): Promise<string[]> {
   try {
-    const data = await fsPromises.readFile(LOG_FILE_PATH, "utf-8");
+    const data = await fsPromises.readFile(ANNOUNCEMENT_LOG_FILE_PATH, "utf-8");
     return data.split("\n").filter(Boolean);
   } catch (error: any) {
     return [];
@@ -190,7 +191,36 @@ async function readAnnouncementLog(): Promise<string[]> {
 
 async function writeAnnouncementLog(announcements: string[]): Promise<void> {
   try {
-    await fsPromises.writeFile(LOG_FILE_PATH, announcements.join("\n"));
+    await fsPromises.writeFile(
+      ANNOUNCEMENT_LOG_FILE_PATH,
+      announcements.join("\n")
+    );
+  } catch (error: any) {
+    console.error(
+      "Error writing to announcement log:",
+      (error as Error).message
+    );
+  }
+}
+
+async function readScheduledEventsLog(): Promise<string[]> {
+  try {
+    const data = await fsPromises.readFile(
+      SCHEDULED_EVENTS_LOG_FILE_PATH,
+      "utf-8"
+    );
+    return data.split("\n").filter(Boolean);
+  } catch (error: any) {
+    return [];
+  }
+}
+
+async function writeScheduledEventsLog(events: string[]): Promise<void> {
+  try {
+    await fsPromises.writeFile(
+      SCHEDULED_EVENTS_LOG_FILE_PATH,
+      events.join("\n")
+    );
   } catch (error: any) {
     console.error(
       "Error writing to announcement log:",
