@@ -135,7 +135,7 @@ async function sendAnnouncementWarnings(
 ) {
   const warnings = await readWarningLog();
   const twoDaysLater = format(
-    add(new Date(), { days: 11 }),
+    add(new Date(), { days: 2 }),
     "EEEE, MMMM dd, yyyy"
   );
 
@@ -154,7 +154,7 @@ async function sendAnnouncementWarnings(
           announcement.includes(announcementId) &&
           (date !== twoDaysLater ||
             announcement.includes(
-              format(add(new Date(), { days: 11 }), "yyyy-MM-dd")
+              format(add(new Date(), { days: 2 }), "yyyy-MM-dd")
             ))
       )
     ) {
@@ -335,11 +335,11 @@ async function getEventsData() {
 
       // Warn admins about upcoming announcements (2 days ahead)
       const twoDaysLater = format(
-        add(new Date(), { days: 11 }),
+        add(new Date(), { days: 2 }),
         "EEEE, MMMM dd, yyyy"
       );
       const nineDaysLater = format(
-        add(new Date(), { days: 13 }),
+        add(new Date(), { days: 9 }),
         "EEEE, MMMM dd, yyyy"
       );
 
