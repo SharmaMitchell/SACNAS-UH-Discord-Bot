@@ -1,4 +1,10 @@
-import { TextChannel, PresenceData, ActivityType, Guild } from "discord.js";
+import {
+  TextChannel,
+  PresenceData,
+  ActivityType,
+  Guild,
+  Message,
+} from "discord.js";
 import { REST } from "@discordjs/rest";
 import {
   Routes,
@@ -6,7 +12,7 @@ import {
   RESTPostAPIGuildScheduledEventResult,
 } from "discord-api-types/v10";
 import { promises as fsPromises } from "fs";
-import { add } from "date-fns";
+import { add, differenceInDays, parse } from "date-fns";
 const { Client, GatewayIntentBits } = require("discord.js");
 const client = new Client({
   intents: [
@@ -46,6 +52,46 @@ client.on("ready", async () => {
 });
 
 client.login(process.env.DISCORD_BOT_TOKEN);
+
+// Admin event announcement preview
+client.on("messageCreate", async (message: Message) => {
+  if (message.channel.id === process.env.ADMIN_CHANNEL_ID) {
+    if (message.content.startsWith("!preview")) {
+      // Extract the event index from the command
+      const commandParts = message.content.split(" ");
+      const eventIndex = parseInt(commandParts[1]);
+
+      const response = await fetch(EVENTS_API_URL);
+
+      const data = (await response.json()) as GoogleSheetsResponse;
+
+      if (data && data.values && data.values.length > 0) {
+        const adminChannel = client.channels.cache.get(
+          process.env.ADMIN_CHANNEL_ID
+        );
+
+        if (adminChannel instanceof TextChannel) {
+          if (isNaN(eventIndex)) {
+            // No number provided, send warnings for all events
+            sendAnnouncementWarnings(data.values, adminChannel, true);
+          } else if (eventIndex >= 1 && eventIndex <= data.values.length) {
+            // Send the warning for the specified event
+            sendAnnouncementWarnings(
+              [data.values[eventIndex - 1]],
+              adminChannel,
+              true
+            );
+          } else {
+            // Invalid index, send a message to inform the user
+            message.channel.send(
+              "Invalid event index. Please use a valid number."
+            );
+          }
+        }
+      }
+    }
+  }
+});
 
 interface GoogleSheetsResponse {
   range: string;
@@ -131,7 +177,8 @@ async function isEventAlreadyScheduled(
 
 async function sendAnnouncementWarnings(
   eventsToAnnounce: string[][],
-  adminChannel: TextChannel
+  adminChannel: TextChannel,
+  isManualPreview?: boolean
 ) {
   const warnings = await readWarningLog();
   const twoDaysLater = format(
@@ -156,7 +203,8 @@ async function sendAnnouncementWarnings(
             announcement.includes(
               format(add(new Date(), { days: 2 }), "yyyy-MM-dd")
             ))
-      )
+      ) &&
+      !isManualPreview
     ) {
       console.log("Already warned about this announcement.");
       return;
@@ -171,12 +219,21 @@ async function sendAnnouncementWarnings(
     const fullSizeEventImage = image.replace(/l\./, ".");
 
     // Build the message
+    const daysUntilEvent = differenceInDays(
+      parse(date, "EEEE, MMMM dd, yyyy", new Date()),
+      new Date()
+    );
+    const weekBeforeEvent = format(
+      add(parse(date, "EEEE, MMMM dd, yyyy", new Date()), { days: -7 }),
+      "EEEE, MMMM dd, yyyy"
+    );
+    const announcementDate = daysUntilEvent >= 6 ? weekBeforeEvent : date;
     const onDate =
       date === twoDaysLater ? "**today**" : `on **${dateWithoutYear}**`;
     const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
     const botInstructions = `To manually preview upcoming announcements in the admin channel, use [command].`;
-    const adminWarning = `**WARNING: The following announcement will be posted in 2 days.**\nPlease ensure information is accurate and format is correct. ${botInstructions}\n\n`;
+    const adminWarning = `**WARNING: The following announcement will be posted on ${announcementDate}.**\nPlease ensure information is accurate and format is correct. ${botInstructions}\n\n`;
 
     let message = `${adminWarning}Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**`;
 
