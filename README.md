@@ -28,8 +28,8 @@ Upon startup, and upon each event announcement message, the bot's Discord status
   - Currently, if an event is scheduled in the Discord server, and changes are made to the event in the Google Sheet, those changes are not reflected on Discord. This creates more work for admins, who have to manually update the Discord event.
 - Add manual announcement option
   - This would allow admins to manually announce events, in case they weren't added to the Google Sheet more than 1 week in advance (thus the bot's 1 week announcement wouldn't go off), or in case of an error with the bot, such that events aren't announced on schedule.
-  - Auto-generated directions to event (pass event location into a Google Maps URL)
-  - Auto-generated "Add to Calendar" link (pass event info into a Google Calendar URL)
+- Auto-generated directions to event (pass event location into a Google Maps URL)
+- Auto-generated "Add to Calendar" link (pass event info into a Google Calendar URL)
 ### Known Issues
 - Event images are not added to Discord Scheduled Events
   - Images are included in the POST request to create the Discord event, but the response returns `image: null`.
