@@ -499,7 +499,7 @@ async function writeWarningLog(events: string[]): Promise<void> {
 
 async function scheduleApiCheck() {
   // Set the desired time for the API check
-  const targetHour = 14;
+  const targetHour = 9;
   const targetMinute = 0;
 
   // Get the CST time zone
