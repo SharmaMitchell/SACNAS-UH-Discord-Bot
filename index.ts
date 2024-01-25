@@ -232,7 +232,7 @@ async function sendAnnouncementWarnings(
       date === twoDaysLater ? "**today**" : `on **${dateWithoutYear}**`;
     const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
-    const botInstructions = `To manually preview upcoming announcements in the admin channel, use [command].`;
+    const botInstructions = `To manually preview upcoming announcements in the admin channel, use !preview.`;
     const adminWarning = `**WARNING: The following announcement will be posted on ${announcementDate}.**\nPlease ensure information is accurate and format is correct. ${botInstructions}\n\n`;
 
     let message = `${adminWarning}Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**`;
