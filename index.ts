@@ -93,6 +93,57 @@ client.on("messageCreate", async (message: Message) => {
   }
 });
 
+// Admin event announcement at given index (based on preview index)
+client.on("messageCreate", async (message: Message) => {
+  if (message.channel.id === process.env.ADMIN_CHANNEL_ID) {
+    if (message.content.startsWith("!announce")) {
+      try {
+        // Extract the event index from the command
+        const commandParts = message.content.split(" ");
+        const eventIndex = parseInt(commandParts[1]);
+
+        const response = await fetch(EVENTS_API_URL);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch events data.");
+        }
+
+        const data = (await response.json()) as GoogleSheetsResponse;
+
+        // inform user if there are no events
+        if (data.values.length === 0) {
+          message.channel.send("There are no events to announce.");
+          return;
+        }
+
+        if (data && data.values && data.values.length > 0) {
+          const channel = client.channels.cache.get(
+            process.env.ANNOUNCEMENT_CHANNEL_ID
+          );
+
+          if (channel instanceof TextChannel) {
+            if (
+              !isNaN(eventIndex) &&
+              eventIndex >= 1 &&
+              eventIndex <= data.values.length
+            ) {
+              // Announce the specified event
+              announceEvents([data.values[eventIndex - 1]], channel);
+            } else {
+              // Invalid index, send a message to inform the user
+              message.channel.send(
+                "Invalid event index. Please use a valid number, i.e. !announce 1"
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.error("An error occurred:", error);
+        message.channel.send("An error occurred while processing the command.");
+      }
+    }
+  }
+});
 interface GoogleSheetsResponse {
   range: string;
   majorDimension: string;
