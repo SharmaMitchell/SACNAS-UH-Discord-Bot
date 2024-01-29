@@ -157,6 +157,27 @@ client.on("messageCreate", async (message: Message) => {
     }
   }
 });
+
+// Admin channel !commands list
+client.on("messageCreate", async (message: Message) => {
+  if (message.channel.id === process.env.ADMIN_CHANNEL_ID) {
+    if (message.content.startsWith("!commands")) {
+      try {
+        const commands = [
+          "!preview [event index] - Preview an event announcement",
+          "!announce [event index] - Announce an event",
+          "Note that events are automatically annonuced 1 week and 1 day before the event date.",
+        ];
+
+        message.channel.send(commands.join("\n"));
+      } catch (error) {
+        console.error("An error occurred while listing commands:", error);
+        message.channel.send("An error occurred while processing the command.");
+      }
+    }
+  }
+});
+
 interface GoogleSheetsResponse {
   range: string;
   majorDimension: string;
