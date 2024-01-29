@@ -57,37 +57,50 @@ client.login(process.env.DISCORD_BOT_TOKEN);
 client.on("messageCreate", async (message: Message) => {
   if (message.channel.id === process.env.ADMIN_CHANNEL_ID) {
     if (message.content.startsWith("!preview")) {
-      // Extract the event index from the command
-      const commandParts = message.content.split(" ");
-      const eventIndex = parseInt(commandParts[1]);
+      try {
+        // Extract the event index from the command
+        const commandParts = message.content.split(" ");
+        const eventIndex = parseInt(commandParts[1]);
 
-      const response = await fetch(EVENTS_API_URL);
+        const response = await fetch(EVENTS_API_URL);
 
-      const data = (await response.json()) as GoogleSheetsResponse;
-
-      if (data && data.values && data.values.length > 0) {
-        const adminChannel = client.channels.cache.get(
-          process.env.ADMIN_CHANNEL_ID
-        );
-
-        if (adminChannel instanceof TextChannel) {
-          if (isNaN(eventIndex)) {
-            // No number provided, send warnings for all events
-            sendAnnouncementWarnings(data.values, adminChannel, true);
-          } else if (eventIndex >= 1 && eventIndex <= data.values.length) {
-            // Send the warning for the specified event
-            sendAnnouncementWarnings(
-              [data.values[eventIndex - 1]],
-              adminChannel,
-              true
-            );
-          } else {
-            // Invalid index, send a message to inform the user
-            message.channel.send(
-              "Invalid event index. Please use a valid number."
-            );
-          }
+        if (!response.ok) {
+          throw new Error("Failed to fetch events data.");
         }
+
+        const data = (await response.json()) as GoogleSheetsResponse;
+
+        if (data && data.values && data.values.length > 0) {
+          const adminChannel = client.channels.cache.get(
+            process.env.ADMIN_CHANNEL_ID
+          );
+
+          if (adminChannel instanceof TextChannel) {
+            if (isNaN(eventIndex)) {
+              // No number provided, send warnings for all events
+              sendAnnouncementWarnings(data.values, adminChannel, true);
+            } else if (eventIndex >= 1 && eventIndex <= data.values.length) {
+              // Send the warning for the specified event
+              sendAnnouncementWarnings(
+                [data.values[eventIndex - 1]],
+                adminChannel,
+                true
+              );
+            } else {
+              // Invalid index, send a message to inform the user
+              message.channel.send(
+                "Invalid event index. Please use a valid number."
+              );
+            }
+          }
+        } else {
+          // No events found, send a message to inform the user
+          message.channel.send("There are no events to preview.");
+        }
+      } catch (error) {
+        // Handle any errors that occur during the preview
+        console.error("An error occurred during the preview:", error);
+        message.channel.send("An error occurred while processing the command.");
       }
     }
   }
@@ -138,7 +151,7 @@ client.on("messageCreate", async (message: Message) => {
           }
         }
       } catch (error) {
-        console.error("An error occurred:", error);
+        console.error("An error occurred during announcement:", error);
         message.channel.send("An error occurred while processing the command.");
       }
     }
