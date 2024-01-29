@@ -164,8 +164,8 @@ client.on("messageCreate", async (message: Message) => {
     if (message.content.startsWith("!commands")) {
       try {
         const commands = [
-          "!preview [event index] - Preview an event announcement",
-          "!announce [event index] - Announce an event",
+          "`!preview [event index]` - Preview an event announcement",
+          "`!announce [event index]` - Announce an event",
           "Note that events are automatically annonuced 1 week and 1 day before the event date.",
         ];
 
