@@ -261,8 +261,10 @@ async function sendAnnouncementWarnings(
     warnings.push(logEntry);
   });
 
-  // Update the announcement log
-  writeWarningLog(warnings);
+  // Update the announcement log (only for automatic warnings)
+  if (!isManualPreview) {
+    writeWarningLog(warnings);
+  }
 }
 
 async function announceEvents(
