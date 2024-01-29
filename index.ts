@@ -36,7 +36,7 @@ client.on("ready", async () => {
 
   // Read the initial count from the announcement log
   const announcements = await readAnnouncementLog();
-  const initialAnnouncementCount = announcements.length;
+  const initialAnnouncementCount = announcements.length - 1;
 
   // Fetch the number of users across all servers
   const totalUsers = client.guilds.cache.reduce(
@@ -345,7 +345,7 @@ async function announceEvents(
   );
 
   // Set the initial status with the count
-  setBotStatus(announcements.length, totalUsers);
+  setBotStatus(announcements.length - 1, totalUsers);
 }
 
 async function getEventsData() {
