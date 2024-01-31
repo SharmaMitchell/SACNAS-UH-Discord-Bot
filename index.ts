@@ -221,7 +221,7 @@ async function createDiscordEvent(
       entity_metadata: { location: eventLocation },
     };
 
-    const logDate = format(startTime, "yyyy-MM");
+    const logDate = format(startTime, "yyyy");
 
     // Check if the event has been scheduled before creating it
     if (await isEventAlreadyScheduled(name, logDate)) {
