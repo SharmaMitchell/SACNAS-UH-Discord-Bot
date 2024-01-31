@@ -221,7 +221,7 @@ async function createDiscordEvent(
       entity_metadata: { location: eventLocation },
     };
 
-    const logDate = format(startTime, "yyyy-MM");
+    const logDate = format(new Date(startTime), "yyyy-MM");
 
     // Check if the event has been scheduled before creating it
     if (await isEventAlreadyScheduled(name, logDate)) {
@@ -255,7 +255,7 @@ async function isEventAlreadyScheduled(
   name: string,
   startTime: Date
 ): Promise<boolean> {
-  const logDate = format(startTime, "yyyy-MM");
+  const logDate = format(new Date(startTime), "yyyy-MM");
   const eventId = `${name}-${logDate}`;
   const scheduledEventsLog = await readScheduledEventsLog();
   return scheduledEventsLog.some((entry) => entry.includes(eventId));
