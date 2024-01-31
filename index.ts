@@ -258,6 +258,7 @@ async function isEventAlreadyScheduled(
   const logDate = format(new Date(startTime), "yyyy-MM");
   const eventId = `${name}-${logDate}`;
   const scheduledEventsLog = await readScheduledEventsLog();
+  console.log(`eventId in scheduledEventsLog: ${scheduledEventsLog.some((entry) => entry.includes(eventId))}`
   return scheduledEventsLog.some((entry) => entry.includes(eventId));
 }
 
