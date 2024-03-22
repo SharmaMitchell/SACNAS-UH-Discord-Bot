@@ -417,7 +417,8 @@ async function announceEvents(
       date === currentDate ? "**today**" : `on **${dateWithoutYear}**`;
     const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
-    let message = `@here Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**`;
+    const directions = `[Directions via Google Maps](<https://www.google.com/maps/search/?api=1&query=${location}>)`;
+    let message = `@here Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**  |  ${directions}`;
 
     // Include event links if available
     for (let i = 0; i < links.length; i += 2) {
