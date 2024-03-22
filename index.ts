@@ -341,9 +341,10 @@ async function sendAnnouncementWarnings(
     const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
     const botInstructions = `To manually preview upcoming announcements in the admin channel, use !preview.`;
+    const directions = `[Directions via Google Maps](<https://www.google.com/maps/search/?api=1&query=${location}>)`;
     const adminWarning = `**WARNING: The following announcement will be posted on ${announcementDate}.**\nPlease ensure information is accurate and format is correct. ${botInstructions}\n\n`;
 
-    let message = `${adminWarning}\`@here\` Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**`;
+    let message = `${adminWarning}\`@here\` Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**  |  ${directions}`;
 
     // Include event links if available
     for (let i = 0; i < links.length; i += 2) {
