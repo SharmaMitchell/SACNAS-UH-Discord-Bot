@@ -218,7 +218,7 @@ async function scheduleAllEvents(events: string[][]) {
     // Combine date and time to form a full datetime value
     const dateTimeString = date + " " + (time || "16:00"); // Default time to 4pm if not provided
     const startTime = new Date(dateTimeString);
-    const endTime = new Date(startTime.getTime() + 3 * 60 * 60 * 1000); // 3 hours past start time
+    const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours past start time
 
     createDiscordEvent(name, description, image, startTime, endTime, location);
   });
@@ -341,11 +341,19 @@ async function sendAnnouncementWarnings(
     const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
     const botInstructions = `To manually preview upcoming announcements in the admin channel, use !preview.`;
+
     const sanitizedLocation = location.replace(/ /g, "+");
     const directions = `[Directions via Google Maps](<https://www.google.com/maps/search/?api=1&query=${sanitizedLocation}>)`;
+
+    const gcalDate = formatGCalDate(date, time);
+    const sanitizedName = name.replace(/ /g, "+");
+    const sanitizedDescription = description.replace(/ /g, "+");
+    const calendarLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=${sanitizedName}&dates=${gcalDate}&details=${sanitizedDescription}&location=${sanitizedLocation}&sf=true&output=xml`;
+    const addtoCalButton = `[Add to Google Calendar](<${calendarLink}>)`;
+
     const adminWarning = `**WARNING: The following announcement will be posted on ${announcementDate}.**\nPlease ensure information is accurate and format is correct. ${botInstructions}\n\n`;
 
-    let message = `${adminWarning}\`@here\` Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**  |  ${directions}`;
+    let message = `${adminWarning}\`@here\` Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**  |  ${directions}  |  ${addtoCalButton}`;
 
     // Include event links if available
     for (let i = 0; i < links.length; i += 2) {
@@ -358,7 +366,7 @@ async function sendAnnouncementWarnings(
     }
 
     // Add a newline before the image URL
-    message += "\n";
+    message += "\n\n";
 
     // Add the image URL to the message
     message += `${fullSizeEventImage}`;
@@ -418,9 +426,17 @@ async function announceEvents(
       date === currentDate ? "**today**" : `on **${dateWithoutYear}**`;
     const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
+
     const sanitizedLocation = location.replace(/ /g, "+");
     const directions = `[Directions via Google Maps](<https://www.google.com/maps/search/?api=1&query=${sanitizedLocation}>)`;
-    let message = `@here Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**  |  ${directions}`;
+
+    const gcalDate = formatGCalDate(date, time);
+    const sanitizedName = name.replace(/ /g, "+");
+    const sanitizedDescription = description.replace(/ /g, "+");
+    const calendarLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=${sanitizedName}&dates=${gcalDate}&details=${sanitizedDescription}&location=${sanitizedLocation}&sf=true&output=xml`;
+    const addtoCalButton = `[Add to Google Calendar](<${calendarLink}>)`;
+
+    let message = `@here Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**  |  ${directions}  |  ${addtoCalButton}`;
 
     // Include event links if available
     for (let i = 0; i < links.length; i += 2) {
@@ -433,7 +449,7 @@ async function announceEvents(
     }
 
     // Add a newline before the image URL
-    message += "\n";
+    message += "\n\n";
 
     // Add the image URL to the message
     message += `${fullSizeEventImage}`;
@@ -680,4 +696,42 @@ function calculateTimeActive(): string {
   );
 
   return `${years} years, ${months} months, ${days} days`;
+}
+
+function formatGCalDate(date: string, time: string) {
+  let formattedCalDates = date;
+  if (date) {
+    let calendarDateNum = Date.parse(date);
+    let calendarDateISO = new Date(calendarDateNum);
+    let day = calendarDateISO.getDate().toString();
+    let month = (calendarDateISO.getMonth() + 1).toString();
+    if (month.length < 2) {
+      month = "0" + month;
+    }
+    let year = calendarDateISO.getFullYear().toString();
+    let calendarDate = year + month + day;
+
+    let calendarStartTime =
+      time
+        .replace(":", "")
+        .replace(/(AM|PM)/, "")
+        .replace(" ", "") + "00";
+    if (calendarStartTime.length < 6) {
+      calendarStartTime = "0" + calendarStartTime;
+    }
+    if (time.indexOf("PM") !== -1) {
+      calendarStartTime = (Number(calendarStartTime) + 120000).toString();
+    }
+    let calendarEndTime = (Number(calendarStartTime) + 20000).toString(); // End time 2 hours after
+
+    formattedCalDates =
+      calendarDate +
+      "T" +
+      calendarStartTime +
+      "/" +
+      calendarDate +
+      "T" +
+      calendarEndTime;
+  }
+  return formattedCalDates;
 }
