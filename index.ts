@@ -53,9 +53,9 @@ client.on("ready", async () => {
 
 client.login(process.env.DISCORD_BOT_TOKEN);
 
-// Admin event announcement preview
 client.on("messageCreate", async (message: Message) => {
   if (message.channel.id === process.env.ADMIN_CHANNEL_ID) {
+    // Admin event announcement preview
     if (message.content.startsWith("!preview")) {
       try {
         // Extract the event index from the command
@@ -103,13 +103,9 @@ client.on("messageCreate", async (message: Message) => {
         message.channel.send("An error occurred while processing the command.");
       }
     }
-  }
-});
 
-// Admin event announcement at given index (based on preview index)
-client.on("messageCreate", async (message: Message) => {
-  if (message.channel.id === process.env.ADMIN_CHANNEL_ID) {
-    if (message.content.startsWith("!announce")) {
+    // Admin event announcement at given index (based on preview index)
+    else if (message.content.startsWith("!announce")) {
       try {
         // Extract the event index from the command
         const commandParts = message.content.split(" ");
@@ -155,13 +151,9 @@ client.on("messageCreate", async (message: Message) => {
         message.channel.send("An error occurred while processing the command.");
       }
     }
-  }
-});
 
-// Admin channel !commands list
-client.on("messageCreate", async (message: Message) => {
-  if (message.channel.id === process.env.ADMIN_CHANNEL_ID) {
-    if (message.content.startsWith("!commands")) {
+    // Admin channel !commands list
+    else if (message.content.startsWith("!commands")) {
       try {
         const commands = [
           "`!preview [event index]` - Preview an event announcement in the admin channel",
@@ -172,6 +164,37 @@ client.on("messageCreate", async (message: Message) => {
         message.channel.send(commands.join("\n"));
       } catch (error) {
         console.error("An error occurred while listing commands:", error);
+        message.channel.send("An error occurred while processing the command.");
+      }
+    }
+
+    // Admin channel !stats command (display bot stats)
+    else if (message.content.startsWith("!stats")) {
+      try {
+        const timeActive = calculateTimeActive();
+
+        const totalUsers = client.guilds.cache.reduce(
+          (accumulator: number, guild: Guild) =>
+            accumulator + guild.memberCount,
+          0
+        );
+
+        const announcements = await readAnnouncementLog();
+        const announcementCount = announcements.length - 1;
+
+        const discordEvents = await readScheduledEventsLog();
+        const discordEventsCount = discordEvents.length;
+
+        const stats = [
+          `Time active: ${timeActive}`,
+          `Server members: ${totalUsers}`,
+          `Events announced: ${announcementCount}`,
+          `Discord events created: ${discordEventsCount}`,
+        ];
+
+        message.channel.send(stats.join("\n"));
+      } catch (error) {
+        console.error("An error occurred while fetching stats:", error);
         message.channel.send("An error occurred while processing the command.");
       }
     }
@@ -629,4 +652,28 @@ function setBotStatus(eventsAnnounced: number, totalUsers: number): void {
   };
 
   client.user.setPresence(status);
+}
+
+// Calculate time bot has been active, from Jan 25 2024 at 5pm
+function calculateTimeActive(): string {
+  const startDate = new Date("2024-01-25T17:00:00");
+  const currentDate = new Date();
+
+  const timeDifference = currentDate.getTime() - startDate.getTime();
+
+  // Calculate years
+  const years = Math.floor(timeDifference / (1000 * 60 * 60 * 24 * 365.25));
+
+  // Calculate months
+  const months = Math.floor(
+    (timeDifference % (1000 * 60 * 60 * 24 * 365.25)) /
+      (1000 * 60 * 60 * 24 * 30.4375)
+  );
+
+  // Calculate days
+  const days = Math.floor(
+    (timeDifference % (1000 * 60 * 60 * 24 * 30.4375)) / (1000 * 60 * 60 * 24)
+  );
+
+  return `${years} years, ${months} months, ${days} days`;
 }
