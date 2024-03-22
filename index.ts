@@ -341,7 +341,8 @@ async function sendAnnouncementWarnings(
     const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
     const botInstructions = `To manually preview upcoming announcements in the admin channel, use !preview.`;
-    const directions = `[Directions via Google Maps](<https://www.google.com/maps/search/?api=1&query=${location}>)`;
+    const sanitizedLocation = location.replace(/ /g, "+");
+    const directions = `[Directions via Google Maps](<https://www.google.com/maps/search/?api=1&query=${sanitizedLocation}>)`;
     const adminWarning = `**WARNING: The following announcement will be posted on ${announcementDate}.**\nPlease ensure information is accurate and format is correct. ${botInstructions}\n\n`;
 
     let message = `${adminWarning}\`@here\` Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**  |  ${directions}`;
@@ -417,7 +418,8 @@ async function announceEvents(
       date === currentDate ? "**today**" : `on **${dateWithoutYear}**`;
     const atTime = time !== "" ? ` at **${time}**` : "";
     const eventDescription = description !== "" ? `\n\n${description}` : "";
-    const directions = `[Directions via Google Maps](<https://www.google.com/maps/search/?api=1&query=${location}>)`;
+    const sanitizedLocation = location.replace(/ /g, "+");
+    const directions = `[Directions via Google Maps](<https://www.google.com/maps/search/?api=1&query=${sanitizedLocation}>)`;
     let message = `@here Join us ${onDate}${atTime} for **${name}**!${eventDescription}\n\nLocation: **${location}**  |  ${directions}`;
 
     // Include event links if available
