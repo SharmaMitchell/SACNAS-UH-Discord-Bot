@@ -99,7 +99,10 @@ client.on("messageCreate", async (message: Message) => {
         }
       } catch (error) {
         // Handle any errors that occur during the preview
-        console.error("An error occurred during the admin announcement preview (!preview):", error);
+        console.error(
+          "An error occurred during the admin announcement preview (!preview):",
+          error
+        );
         message.channel.send("An error occurred while processing the command.");
       }
     }
@@ -147,7 +150,10 @@ client.on("messageCreate", async (message: Message) => {
           }
         }
       } catch (error) {
-        console.error("An error occurred during announcement (!announce):", error);
+        console.error(
+          "An error occurred during announcement (!announce):",
+          error
+        );
         message.channel.send("An error occurred while processing the command.");
       }
     }
@@ -254,7 +260,7 @@ async function createDiscordEvent(
       return "";
     }
 
-    console.log(`Creating Discord Event: ${name}`)
+    console.log(`Creating Discord Event: ${name}`);
 
     const event = (await rest.post(
       Routes.guildScheduledEvents(process.env.DISCORD_GUILD_ID!),
@@ -480,7 +486,7 @@ async function getEventsData() {
 
     const data = (await response.json()) as GoogleSheetsResponse;
 
-    console.log('Google Sheets Events Data: ', data.values)
+    console.log("Google Sheets Events Data: ", data.values);
 
     if (data && data.values && data.values.length > 0) {
       // Add scheduled events to server
@@ -503,7 +509,10 @@ async function getEventsData() {
           event[3] === currentDate || event[3] === formattedOneWeekLater
       );
 
-      console.log('Events to announce (today or on week from today)', eventsToAnnounce);
+      console.log(
+        "Events to announce (today or on week from today)",
+        eventsToAnnounce
+      );
 
       if (eventsToAnnounce.length > 0) {
         // Get the channel where you want to send the message
@@ -514,7 +523,9 @@ async function getEventsData() {
         if (channel instanceof TextChannel) {
           await announceEvents(eventsToAnnounce, channel);
         } else {
-          console.error("getEventsData error: The channel is not a text channel.");
+          console.error(
+            "getEventsData error: The channel is not a text channel."
+          );
         }
       }
 
@@ -541,12 +552,17 @@ async function getEventsData() {
         if (adminChannel instanceof TextChannel) {
           await sendAnnouncementWarnings(eventsToWarn, adminChannel);
         } else {
-          console.error("getEventsData error: The channel is not a text channel.");
+          console.error(
+            "getEventsData error: The channel is not a text channel."
+          );
         }
       }
     }
   } catch (error: any) {
-    console.error("getEventsData Error checking API:", (error as Error).message);
+    console.error(
+      "getEventsData Error checking API:",
+      (error as Error).message
+    );
   }
 }
 
@@ -555,7 +571,7 @@ async function readAnnouncementLog(): Promise<string[]> {
     const data = await fsPromises.readFile(ANNOUNCEMENT_LOG_FILE_PATH, "utf-8");
     return data.split("\n").filter(Boolean);
   } catch (error: any) {
-    console.error("readAnnouncementLog error: ", (error as Error).message)
+    console.error("readAnnouncementLog error: ", (error as Error).message);
     return [];
   }
 }
@@ -582,7 +598,7 @@ async function readScheduledEventsLog(): Promise<string[]> {
     );
     return data.split("\n").filter(Boolean);
   } catch (error: any) {
-    console.error("readScheduledEventsLog error: ", (error as Error).message)
+    console.error("readScheduledEventsLog error: ", (error as Error).message);
 
     return [];
   }
@@ -610,7 +626,7 @@ async function readWarningLog(): Promise<string[]> {
     );
     return data.split("\n").filter(Boolean);
   } catch (error: any) {
-    console.error("readWarningLog error: ", (error as Error).message)
+    console.error("readWarningLog error: ", (error as Error).message);
     return [];
   }
 }
@@ -630,39 +646,41 @@ async function writeWarningLog(events: string[]): Promise<void> {
 }
 
 async function scheduleApiCheck() {
-  try{
-  // Set the desired time for the API check
-  const targetHour = 9;
-  const targetMinute = 0;
+  try {
+    // Set the desired time for the API check
+    const targetHour = 9;
+    const targetMinute = 0;
 
-  // Get the CST time zone
-  const cstTimeZone = "America/Chicago";
+    // Get the CST time zone
+    const cstTimeZone = "America/Chicago";
 
-  // Calculate the target time for the next check
-  const now = new Date();
-  const targetTime = startOfMinute(
-    addMinutes(
-      parseISO(format(now, "yyyy-MM-dd'T'HH:mm:ss", { timeZone: cstTimeZone })),
-      targetMinute - now.getMinutes() + (targetHour - now.getHours()) * 60
-    )
-  );
+    // Calculate the target time for the next check
+    const now = new Date();
+    const targetTime = startOfMinute(
+      addMinutes(
+        parseISO(
+          format(now, "yyyy-MM-dd'T'HH:mm:ss", { timeZone: cstTimeZone })
+        ),
+        targetMinute - now.getMinutes() + (targetHour - now.getHours()) * 60
+      )
+    );
 
-  // Calculate the delay until the next target time
-  let delay = targetTime.getTime() - now.getTime();
-  if (delay < 0) {
-    // If the target time has already passed, set it for the next day
-    delay += 24 * 60 * 60 * 1000;
+    // Calculate the delay until the next target time
+    let delay = targetTime.getTime() - now.getTime();
+    if (delay < 0) {
+      // If the target time has already passed, set it for the next day
+      delay += 24 * 60 * 60 * 1000;
+    }
+
+    // Schedule the API check to run at the specified time every day
+    setTimeout(async () => {
+      await getEventsData();
+      // Schedule the next API check
+      scheduleApiCheck();
+    }, delay);
+  } catch (error: any) {
+    console.error("scheduleApiCheck error: ", (error as Error).message);
   }
-
-  // Schedule the API check to run at the specified time every day
-  setTimeout(async () => {
-    await getEventsData();
-    // Schedule the next API check
-    scheduleApiCheck();
-  }, delay);
-} catch (error: any) {
-  console.error("scheduleApiCheck error: ", (error as Error).message)
-}
 }
 
 // Set bot's status to show the number of events announced
