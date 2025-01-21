@@ -23,8 +23,6 @@ const client = new Client({
 });
 const { format, startOfMinute, addMinutes, parseISO } = require("date-fns");
 
-// test
-
 require("dotenv").config({ path: ".env.local" });
 
 const EVENTS_API_URL = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.EVENTS_SHEET_ID}/values/Upcoming!A2:J19?key=${process.env.GOOGLE_API_KEY}`;
