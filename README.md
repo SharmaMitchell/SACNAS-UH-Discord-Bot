@@ -13,27 +13,43 @@ This bot fetches event information from Google Sheets at a set interval (current
 All event announcements are logged, to avoid repeated announcements, and (in addition to the fetch on the set interval) event info is fetched upon bot startup, in case the bot happens to be down during the scheduled fetch interval.
 
 Event announcements feature all event information, including titles, descriptions, dates, locations, images, and associated event links.
+
 ### Event Announcement Previews
 Admins can preview upcoming event announcements using multiple methods.
 
 Firstly, an automated reminder is sent to an admin channel 2 days prior to event announcements, with a preview of the announcement. This reminds admins to double-check event info and formatting before the announcement is sent out.
 
 Upon making changes to event information, admins can manually preview an event announcement using the `!preview` command. By default, announcement previews will be generated for all upcoming events, but a specific event can be specified by adding a number that corresponds to the event's order in the upcoming events list. For example, `!preview 1` will generate an announcement preview only for the soonest upcoming event; `!preview 2` will generate a preview for the second upcoming event, etc.
+
+### Manual Event Announcement
+Admins can manually announce events using the `!announce` command. Similarly to previews, this command takes the index of the event to be announced, ex. `!announce 1` to announce the soonest upcoming event. The announcement will not occur unless a specific event index is given.
+
+This allows admins to manually announce events, in case they weren't added to the Google Sheet more than 1 week in advance (thus the bot's 1 week announcement wouldn't go off), or in case the event needs to be announced more than 1 week ahead (ex. event requiring travel or application).
+
 ### Discord Scheduled Event Creation
 In addition to announcement messages, this bot also generates scheduled events within the discord server. This allows users to RSVP prior to the event, and persists in the server as a reminder of the upcoming event. These events are added to the server as soon as they are added to the Google Sheet (upon the next fetch interval), rather than being added in tandem with event announcement messages. This gives users a longer-term warning ahead of time, and provides a running list of upcoming events within the Discord server, that is consistent with the website and Google Sheet.
-### Announcement and User Count
-Upon startup, and upon each event announcement message, the bot's Discord status is updated to display the total number of announcements made and users in its server(s). The announcement count is based on the announcement log file.
+
+### Bot Statistics
+Admins can view the following statistics using the `!stats` command:
+- Time active
+- Server members
+- Events announced
+- Discord events created
+
+The bot's Discord status also displays the total number of announcements made and users in its server(s). These statistics are updated upon startup, and upon each event announcement message.
+
 ### Upcoming Features
-- Push event updates from Google Sheets to scheduled events in the Discord server
+- [ ] Push event updates from Google Sheets to scheduled events in the Discord server
   - Currently, if an event is scheduled in the Discord server, and changes are made to the event in the Google Sheet, those changes are not reflected on Discord. This creates more work for admins, who have to manually update the Discord event.
-- Add manual announcement option
-  - This would allow admins to manually announce events, in case they weren't added to the Google Sheet more than 1 week in advance (thus the bot's 1 week announcement wouldn't go off), or in case of an error with the bot, such that events aren't announced on schedule.
-- Auto-generated directions to event (pass event location into a Google Maps URL)
-- Auto-generated "Add to Calendar" link (pass event info into a Google Calendar URL)
+- [x] Add manual announcement option
+- [x] Auto-generated directions to event (pass event location into a Google Maps URL)
+- [x] Auto-generated "Add to Calendar" link (pass event info into a Google Calendar URL)
+
 ### Known Issues
 - Event images are not added to Discord Scheduled Events
   - Images are included in the POST request to create the Discord event, but the response returns `image: null`.
   - This is on the backburner as it's not a severe breaking issue, but something I'd like to fix in the future.
+
 ### Self Hosting
 If you'd like to fork the bot for your own usage, use the following instructions to set up your environment:
 - Env variables
