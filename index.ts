@@ -685,17 +685,21 @@ async function scheduleApiCheck() {
 
 // Set bot's status to show the number of events announced
 function setBotStatus(eventsAnnounced: number, totalUsers: number): void {
-  const status: PresenceData = {
-    activities: [
-      {
-        name: `${eventsAnnounced} events announced to ${totalUsers} Sacnistas!`,
-        type: ActivityType.Custom,
-      },
-    ],
-    status: "online",
-  };
+  try {
+    const status: PresenceData = {
+      activities: [
+        {
+          name: `${eventsAnnounced} events announced to ${totalUsers} Sacnistas!`,
+          type: ActivityType.Custom,
+        },
+      ],
+      status: "online",
+    };
 
-  client.user.setPresence(status);
+    client.user.setPresence(status);
+  } catch (error: any) {
+    console.error("setBotStatus error: ", (error as Error).message);
+  }
 }
 
 // Calculate time bot has been active, from Jan 25 2024 at 5pm
