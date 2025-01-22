@@ -166,6 +166,7 @@ client.on("messageCreate", async (message: Message) => {
           "`!announce [event index]` - Announce an event in the (public) announcement channel",
           "`!stats` - Display Discord bot stats (active time, server members, events announced, etc.)",
           "Note that events are automatically announced 1 week and 1 day before the event date.",
+          "For additional info on features, integrations, and code, see: https://github.com/SharmaMitchell/SACNAS-UH-Discord-Bot",
         ];
 
         message.channel.send(commands.join("\n"));
