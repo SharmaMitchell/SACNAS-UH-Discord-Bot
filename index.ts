@@ -395,7 +395,8 @@ async function sendAnnouncementWarnings(
 
 async function announceEvents(
   eventsToAnnounce: string[][],
-  channel: TextChannel
+  channel: TextChannel,
+  isManualAnnouncement?: boolean
 ) {
   const announcements = await readAnnouncementLog();
   const currentDate = format(new Date(), "EEEE, MMMM dd, yyyy");
@@ -415,7 +416,8 @@ async function announceEvents(
           announcement.includes(announcementId) &&
           (date !== currentDate ||
             announcement.includes(format(new Date(), "yyyy-MM-dd")))
-      )
+      ) &&
+      !isManualAnnouncement
     ) {
       return;
     }
