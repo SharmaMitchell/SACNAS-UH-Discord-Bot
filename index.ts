@@ -140,7 +140,7 @@ client.on("messageCreate", async (message: Message) => {
               eventIndex <= data.values.length
             ) {
               // Announce the specified event
-              announceEvents([data.values[eventIndex - 1]], channel);
+              announceEvents([data.values[eventIndex - 1]], channel, true);
             } else {
               // Invalid index, send a message to inform the user
               message.channel.send(
